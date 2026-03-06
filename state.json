@@ -1,0 +1,33 @@
+{
+  "cycle": 863,
+  "startedAt": "2026-03-05T14:40:09.639Z",
+  "agents": {
+    "alpha": {
+      "balance": 0,
+      "yieldEarned": 0,
+      "feesPaid": 0,
+      "currentChain": "base",
+      "deployedAmount": 0
+    },
+    "bravo": {
+      "balance": 0,
+      "yieldEarned": 0,
+      "feesPaid": 0,
+      "currentChain": "base",
+      "deployedAmount": 0
+    },
+    "hermes": {
+      "balance": 0,
+      "feesEarned": 0,
+      "jobsExecuted": 0,
+      "auctionsRun": 0
+    }
+  },
+  "rates": {
+    "optimism": 0.021013497061688646,
+    "base": 0.027688645115908406,
+    "arbitrum": 0.015782353283766204
+  },
+  "history": [],
+  "paused": false
+}

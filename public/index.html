@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Agent Economy</title>
+    <style>
+      :root {
+        --bg: #030805;
+        --fg: #69ff94;
+        --dim: #2f7d4b;
+        --panel: #051109;
+        --warn: #ffd84d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Courier New', Courier, monospace;
+        background: radial-gradient(circle at 20% 20%, #0b1e12 0%, var(--bg) 35%, #000 100%);
+        color: var(--fg);
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 10px;
+        padding: 10px;
+      }
+
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          to bottom,
+          rgba(120, 255, 170, 0.06) 0,
+          rgba(120, 255, 170, 0.06) 1px,
+          transparent 2px,
+          transparent 4px
+        );
+        mix-blend-mode: screen;
+      }
+
+      .topbar,
+      .leaderboard,
+      .panel {
+        border: 1px solid var(--dim);
+        background: rgba(4, 18, 10, 0.92);
+        box-shadow: 0 0 18px rgba(92, 255, 155, 0.08);
+      }
+
+      .topbar {
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .rates {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .panels {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        min-height: 50vh;
+      }
+
+      .panel {
+        display: grid;
+        grid-template-rows: auto 1fr;
+      }
+
+      .panel h2 {
+        margin: 0;
+        padding: 8px 10px;
+        font-size: 15px;
+        border-bottom: 1px solid var(--dim);
+      }
+
+      .log {
+        padding: 10px;
+        overflow: auto;
+        white-space: pre-wrap;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .leaderboard {
+        padding: 10px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        border: 1px solid var(--dim);
+        padding: 6px;
+        text-align: left;
+      }
+
+      button {
+        background: #0f2a18;
+        color: var(--fg);
+        border: 1px solid var(--dim);
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+
+      .status {
+        color: var(--warn);
+      }
+
+      @media (max-width: 980px) {
+        .panels {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div>
+        <strong>THE AGENT ECONOMY</strong>
+        <span class="status" id="status">LIVE</span>
+      </div>
+      <div class="rates" id="rates">
+        <span>Optimism: --</span>
+        <span>Base: --</span>
+        <span>Arbitrum: --</span>
+      </div>
+      <button id="pauseBtn">Pause Agents</button>
+    </div>
+
+    <div class="panels">
+      <section class="panel">
+        <h2>ALPHA</h2>
+        <div class="log" id="alphaLog"></div>
+      </section>
+      <section class="panel">
+        <h2>BRAVO</h2>
+        <div class="log" id="bravoLog"></div>
+      </section>
+      <section class="panel">
+        <h2>HERMES</h2>
+        <div class="log" id="hermesLog"></div>
+      </section>
+    </div>
+
+    <div class="leaderboard">
+      <table>
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>Net P&L</th>
+            <th>Yield Earned</th>
+            <th>Fees Paid</th>
+            <th>Fees Collected</th>
+            <th>Current Chain</th>
+            <th>Deployed</th>
+            <th>Jobs Executed</th>
+          </tr>
+        </thead>
+        <tbody id="board"></tbody>
+      </table>
+    </div>
+
+    <script>
+      const logs = {
+        alpha: document.getElementById('alphaLog'),
+        bravo: document.getElementById('bravoLog'),
+        hermes: document.getElementById('hermesLog'),
+      };
+
+      const ratesEl = document.getElementById('rates');
+      const boardEl = document.getElementById('board');
+      const statusEl = document.getElementById('status');
+      const pauseBtn = document.getElementById('pauseBtn');
+
+      let paused = false;
+      const ws = new WebSocket(`ws://${location.host}`);
+
+      function appendLog(agent, text, ts) {
+        const target = logs[agent] || logs.hermes;
+        target.textContent += `[${new Date(ts).toLocaleTimeString()}] ${text}\n`;
+        target.scrollTop = target.scrollHeight;
+      }
+
+      function num(n) {
+        return Number(n || 0).toFixed(6);
+      }
+
+      function render(state) {
+        if (!state) return;
+
+        ratesEl.innerHTML = [
+          `Optimism: ${(state.rates.optimism * 100).toFixed(3)}%`,
+          `Base: ${(state.rates.base * 100).toFixed(3)}%`,
+          `Arbitrum: ${(state.rates.arbitrum * 100).toFixed(3)}%`,
+        ]
+          .map((r) => `<span>${r}</span>`)
+          .join('');
+
+        const a = state.agents.alpha;
+        const b = state.agents.bravo;
+        const h = state.agents.hermes;
+
+        boardEl.innerHTML = [
+          {
+            name: 'alpha',
+            pnl: a.balance + a.yieldEarned - a.feesPaid,
+            y: a.yieldEarned,
+            fp: a.feesPaid,
+            fc: 0,
+            chain: a.currentChain || '-',
+            d: a.deployedAmount,
+            j: '-',
+          },
+          {
+            name: 'bravo',
+            pnl: b.balance + b.yieldEarned - b.feesPaid,
+            y: b.yieldEarned,
+            fp: b.feesPaid,
+            fc: 0,
+            chain: b.currentChain || '-',
+            d: b.deployedAmount,
+            j: '-',
+          },
+          {
+            name: 'hermes',
+            pnl: h.balance + h.feesEarned,
+            y: 0,
+            fp: 0,
+            fc: h.feesEarned,
+            chain: '-',
+            d: 0,
+            j: h.jobsExecuted,
+          },
+        ]
+          .map(
+            (row) =>
+              `<tr>
+                <td>${row.name}</td>
+                <td>${num(row.pnl)}</td>
+                <td>${num(row.y)}</td>
+                <td>${num(row.fp)}</td>
+                <td>${num(row.fc)}</td>
+                <td>${row.chain}</td>
+                <td>${num(row.d)}</td>
+                <td>${row.j}</td>
+              </tr>`,
+          )
+          .join('');
+
+        paused = !!state.paused;
+        statusEl.textContent = paused ? 'PAUSED' : 'LIVE';
+        pauseBtn.textContent = paused ? 'Resume Agents' : 'Pause Agents';
+      }
+
+      pauseBtn.addEventListener('click', () => {
+        ws.send(JSON.stringify({ type: 'control', action: 'togglePause' }));
+      });
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.agent === 'alpha' || msg.agent === 'bravo' || msg.agent === 'hermes') {
+          appendLog(msg.agent, msg.message, msg.timestamp);
+        } else {
+          appendLog('hermes', `[SYSTEM] ${msg.message}`, msg.timestamp);
+        }
+        render(msg.state);
+      };
+
+      ws.onclose = () => {
+        statusEl.textContent = 'DISCONNECTED';
+      };
+    </script>
+  </body>
+</html>
