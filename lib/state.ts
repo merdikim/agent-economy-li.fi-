@@ -16,14 +16,14 @@ function initialState(): AppState {
         currentChain: null,
         deployedAmount: 0,
       },
-      bravo: {
+      gamma: {
         balance: 0,
         yieldEarned: 0,
         feesPaid: 0,
         currentChain: null,
         deployedAmount: 0,
       },
-      hermes: {
+      zebra: {
         balance: 0,
         feesEarned: 0,
         jobsExecuted: 0,
@@ -40,13 +40,45 @@ function initialState(): AppState {
   };
 }
 
+function normalizeState(raw: unknown): AppState {
+  const base = initialState();
+  const parsed = (raw && typeof raw === 'object' ? raw : {}) as Record<string, any>;
+  const agents = (parsed.agents && typeof parsed.agents === 'object' ? parsed.agents : {}) as Record<string, any>;
+
+  return {
+    ...base,
+    ...parsed,
+    agents: {
+      alpha: {
+        ...base.agents.alpha,
+        ...(agents.alpha || {}),
+      },
+      gamma: {
+        ...base.agents.gamma,
+        ...(agents.gamma || {}),
+      },
+      zebra: {
+        ...base.agents.zebra,
+        ...(agents.zebra || {}),
+      },
+    },
+    rates: {
+      ...base.rates,
+      ...(parsed.rates || {}),
+    },
+    history: Array.isArray(parsed.history) ? parsed.history : base.history,
+    paused: Boolean(parsed.paused),
+  };
+}
+
 export class StateManager {
   private state: AppState = initialState();
 
   async load(): Promise<AppState> {
     try {
       const raw = await fs.readFile(STATE_PATH, 'utf8');
-      this.state = JSON.parse(raw) as AppState;
+      this.state = normalizeState(JSON.parse(raw));
+      await this.save();
     } catch {
       this.state = initialState();
       await this.save();

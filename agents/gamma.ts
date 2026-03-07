@@ -6,11 +6,11 @@ import { jobBoard } from '../lib/jobBoard.js';
 import { CHAIN_KEYS } from '../lib/chains.js';
 import type { AgentContext, DecisionOutput } from '../lib/types.js';
 
-const BRAVO_PROMPT = "You are BRAVO, a disciplined AI yield optimizer managing a real USDC wallet across Ethereum L2s. You monitor Aave V3 lending rates on Optimism, Base, and Arbitrum. Your mandate is to maximize risk-adjusted yield. You only bridge when the APY spread exceeds your cost of bridging (Hermes fee + gas). You never overbid. Calculate explicitly: expected yield gain over 24h minus total bridge cost. Only move if the number is positive and material. Output your reasoning in 2-3 sentences, then output a JSON block: `{ shouldBridge: bool, targetChain: string, bidFee: number, reasoning: string }`.";
+const GAMMA_PROMPT = "You are GAMMA, a disciplined AI yield optimizer managing a real USDC wallet across Ethereum L2s. You monitor Aave V3 lending rates on Optimism, Base, and Arbitrum. Your mandate is to maximize risk-adjusted yield. You only bridge when the APY spread exceeds your cost of bridging (Zebra fee + gas). You never overbid. Calculate explicitly: expected yield gain over 24h minus total bridge cost. Only move if the number is positive and material. Output your reasoning in 2-3 sentences, then output a JSON block: `{ shouldBridge: bool, targetChain: string, bidFee: number, reasoning: string }`.";
 
-export function startBravo(ctx: AgentContext) {
+export function startGamma(ctx: AgentContext) {
   const { stateManager, chainClients, walletContext, broadcast, isPaused } = ctx;
-  const bravoAgent = new Agent(BRAVO_PROMPT);
+  const gammaAgent = new Agent(GAMMA_PROMPT);
 
   let lastYieldAt = Date.now();
 
@@ -22,13 +22,13 @@ export function startBravo(ctx: AgentContext) {
       const rates = await getRates(chainClients);
 
       await stateManager.update(async (state) => {
-        const bravoState = state.agents.bravo;
-        if (bravoState.currentChain && bravoState.deployedAmount > 0) {
+        const gammaState = state.agents.gamma;
+        if (gammaState.currentChain && gammaState.deployedAmount > 0) {
           const dt = (now - lastYieldAt) / 1000;
-          const chainRate = rates[bravoState.currentChain] || 0;
-          const gain = bravoState.deployedAmount * chainRate * (dt / 31536000);
-          bravoState.yieldEarned += gain;
-          bravoState.balance += gain;
+          const chainRate = rates[gammaState.currentChain] || 0;
+          const gain = gammaState.deployedAmount * chainRate * (dt / 31536000);
+          gammaState.yieldEarned += gain;
+          gammaState.balance += gain;
         }
 
         state.cycle += 1;
@@ -44,18 +44,18 @@ export function startBravo(ctx: AgentContext) {
       });
 
       const s = stateManager.get();
-      const bravo = s.agents.bravo;
-      const current = bravo.currentChain;
+      const gamma = s.agents.gamma;
+      const current = gamma.currentChain;
       const bestChain = CHAIN_KEYS.reduce((acc, key) => (s.rates[key] > s.rates[acc] ? key : acc), 'optimism');
 
       if (!current) {
         await stateManager.update(async (state) => {
-          state.agents.bravo.currentChain = bestChain;
-          state.agents.bravo.deployedAmount = state.agents.bravo.balance;
+          state.agents.gamma.currentChain = bestChain;
+          state.agents.gamma.deployedAmount = state.agents.gamma.balance;
         });
         broadcast({
           type: 'log',
-          agent: 'bravo',
+          agent: 'gamma',
           message: `Initial deployment set to ${bestChain}.`,
           state: stateManager.get(),
         });
@@ -67,18 +67,18 @@ export function startBravo(ctx: AgentContext) {
       if (spreadBps < 50 || bestChain === current) {
         broadcast({
           type: 'log',
-          agent: 'bravo',
+          agent: 'gamma',
           message: `No action. Spread ${spreadBps.toFixed(2)} bps is below threshold.`,
           state: stateManager.get(),
         });
         return;
       }
 
-      const amount = Number(bravo.deployedAmount || bravo.balance);
+      const amount = Number(gamma.deployedAmount || gamma.balance);
       if (!amount || amount <= 0) {
         broadcast({
           type: 'log',
-          agent: 'bravo',
+          agent: 'gamma',
           message: 'No deployable USDC available; skipping bid.',
           state: stateManager.get(),
         });
@@ -87,25 +87,23 @@ export function startBravo(ctx: AgentContext) {
 
       let quote;
       try {
-        quote = await getQuote(current, bestChain, amount.toFixed(6), walletContext.agents.bravo.address);
+        quote = await getQuote(current, bestChain, amount.toFixed(6), walletContext.agents.gamma.address);
       } catch (error) {
         broadcast({
           type: 'log',
-          agent: 'bravo',
+          agent: 'gamma',
           message: `Quote failed: ${(error as Error).message}`,
           state: stateManager.get(),
         });
         return;
       }
 
-      console.log(quote)
-
       const expectedGain24h = (amount * spread) / 365;
 
       const prompt = [
         `Current chain: ${current}`,
         `Current deployed amount (USDC): ${amount.toFixed(6)}`,
-        `P&L: ${JSON.stringify(bravo)}`,
+        `P&L: ${JSON.stringify(gamma)}`,
         `Rates: ${JSON.stringify(s.rates)}`,
         `Target chain candidate: ${bestChain}`,
         `Spread bps: ${spreadBps.toFixed(2)}`,
@@ -114,14 +112,14 @@ export function startBravo(ctx: AgentContext) {
         'Output required JSON fields exactly.',
       ].join('\n');
 
-      const agentResponse = await bravoAgent.ask(prompt);
+      const agentResponse = await gammaAgent.ask(prompt);
       const parsed = extractJsonBlock<DecisionOutput>(agentResponse);
 
       if (!parsed.shouldBridge) {
         broadcast({
           type: 'log',
-          agent: 'bravo',
-          message: parsed.reasoning || 'Claude declined to bridge.',
+          agent: 'gamma',
+          message: parsed.reasoning || 'Gamma declined to bridge.',
           state: stateManager.get(),
         });
         return;
@@ -132,17 +130,17 @@ export function startBravo(ctx: AgentContext) {
       if (net24h <= 0) {
         broadcast({
           type: 'log',
-          agent: 'bravo',
+          agent: 'gamma',
           message: `Declined by policy. Net 24h gain ${net24h.toFixed(6)} <= 0 after costs.`,
           state: stateManager.get(),
         });
         return;
       }
 
-      if (requestedFee >= bravo.balance) {
+      if (requestedFee >= gamma.balance) {
         broadcast({
           type: 'log',
-          agent: 'bravo',
+          agent: 'gamma',
           message: 'Fee would exceed available balance. Skipping bridge offer.',
           state: stateManager.get(),
         });
@@ -150,7 +148,7 @@ export function startBravo(ctx: AgentContext) {
       }
 
       const offer = {
-        from: 'bravo' as const,
+        from: 'gamma' as const,
         fromChain: current,
         targetChain: parsed.targetChain || bestChain,
         amount,
@@ -164,14 +162,14 @@ export function startBravo(ctx: AgentContext) {
       jobBoard.postJob(offer);
       broadcast({
         type: 'log',
-        agent: 'bravo',
+        agent: 'gamma',
         message: `Posted bridge bid ${offer.fee.toFixed(6)} USDC for ${current} -> ${offer.targetChain}.`,
         state: stateManager.get(),
       });
     } catch (error) {
       broadcast({
         type: 'log',
-        agent: 'bravo',
+        agent: 'gamma',
         message: `Cycle failed: ${(error as Error).message}`,
         state: stateManager.get(),
       });
@@ -179,20 +177,20 @@ export function startBravo(ctx: AgentContext) {
   }
 
   jobBoard.on('jobComplete', async (result) => {
-    if (result?.winner !== 'bravo') return;
+    if (result?.winner !== 'gamma') return;
 
     await stateManager.update(async (state) => {
       if (result.status === 'success') {
-        state.agents.bravo.currentChain = result.targetChain;
-        state.agents.bravo.feesPaid += result.feePaid || 0;
-        state.agents.bravo.balance -= result.feePaid || 0;
-        state.agents.bravo.deployedAmount = result.amount || state.agents.bravo.deployedAmount;
+        state.agents.gamma.currentChain = result.targetChain;
+        state.agents.gamma.feesPaid += result.feePaid || 0;
+        state.agents.gamma.balance -= result.feePaid || 0;
+        state.agents.gamma.deployedAmount = result.amount || state.agents.gamma.deployedAmount;
       }
     });
 
     broadcast({
       type: 'execution',
-      agent: 'bravo',
+      agent: 'gamma',
       message: `Execution ${result.status}. ${result.txHash ? `tx=${result.txHash}` : ''}`,
       state: stateManager.get(),
     });
@@ -204,6 +202,6 @@ export function startBravo(ctx: AgentContext) {
   }, 15_000);
 
   return {
-    bravoAgent,
+    gammaAgent,
   };
 }

@@ -54,8 +54,8 @@ export function initWallets(): WalletContext {
 
   const agentConfig: Record<AgentName, string> = {
     alpha: requireEnv('ALPHA_PRIVATE_KEY'),
-    bravo: requireEnv('BRAVO_PRIVATE_KEY'),
-    hermes: requireEnv('HERMES_PRIVATE_KEY'),
+    gamma: requireEnv('GAMMA_PRIVATE_KEY'),
+    zebra: requireEnv('ZEBRA_PRIVATE_KEY'),
   };
 
   const agents = {} as WalletContext['agents'];

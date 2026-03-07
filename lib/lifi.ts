@@ -74,7 +74,7 @@ export async function getQuote(
   }
 }
 
-export async function executeRoute(route: Route, walletClient: WalletClient): Promise<string> {
+export async function executeRoute(route: Route | LiFiStep, walletClient: WalletClient): Promise<string> {
   evmProvider.setOptions({
     getWalletClient: async () => walletClient,
     switchChain: async (chainId: number) => {
@@ -87,7 +87,7 @@ export async function executeRoute(route: Route, walletClient: WalletClient): Pr
     },
   });
 
-  const execution = await lifiExecuteRoute(route, {
+  const execution = await lifiExecuteRoute(route as Route, {
     updateRouteHook: () => {},
     acceptExchangeRateUpdateHook: async () => true,
   });

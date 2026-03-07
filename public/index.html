@@ -6,11 +6,13 @@
     <title>The Agent Economy</title>
     <style>
       :root {
-        --bg: #030805;
-        --fg: #69ff94;
-        --dim: #2f7d4b;
-        --panel: #051109;
-        --warn: #ffd84d;
+        --bg: #ffffff;
+        --surface: #ffffff;
+        --surface-muted: #f6f6f4;
+        --border: #deded8;
+        --text: #171717;
+        --text-muted: #6b6b63;
+        --accent: #111111;
       }
 
       * {
@@ -19,83 +21,142 @@
 
       body {
         margin: 0;
-        font-family: 'Courier New', Courier, monospace;
-        background: radial-gradient(circle at 20% 20%, #0b1e12 0%, var(--bg) 35%, #000 100%);
-        color: var(--fg);
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
         min-height: 100vh;
-        display: grid;
-        grid-template-rows: auto 1fr auto;
-        gap: 10px;
-        padding: 10px;
       }
 
-      body::before {
-        content: '';
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        background: repeating-linear-gradient(
-          to bottom,
-          rgba(120, 255, 170, 0.06) 0,
-          rgba(120, 255, 170, 0.06) 1px,
-          transparent 2px,
-          transparent 4px
-        );
-        mix-blend-mode: screen;
+      .page {
+        width: min(1120px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 32px 0 40px;
       }
 
       .topbar,
       .leaderboard,
       .panel {
-        border: 1px solid var(--dim);
-        background: rgba(4, 18, 10, 0.92);
-        box-shadow: 0 0 18px rgba(92, 255, 155, 0.08);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        margin: 0;
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(32px, 6vw, 64px);
+        line-height: 0.95;
+        letter-spacing: -0.05em;
+        font-weight: 500;
+        max-width: 10ch;
+      }
+
+      .subtitle {
+        margin: 0;
+        max-width: 560px;
+        color: var(--text-muted);
+        line-height: 1.6;
       }
 
       .topbar {
-        padding: 10px;
+        padding: 18px 20px;
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+
+      .controls {
+        display: flex;
         gap: 10px;
         flex-wrap: wrap;
       }
 
+      .topbar strong {
+        display: block;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+
       .rates {
         display: flex;
-        gap: 16px;
+        gap: 10px;
         flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .rates span {
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: var(--surface-muted);
+        color: var(--text-muted);
+        font-size: 13px;
       }
 
       .panels {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
-        min-height: 50vh;
+        gap: 16px;
+        min-height: 48vh;
+        margin-bottom: 20px;
       }
 
       .panel {
         display: grid;
-        grid-template-rows: auto 1fr;
+        grid-template-rows: auto minmax(0, 1fr);
+        max-height: 60vh;
+        min-height: 0;
       }
 
       .panel h2 {
         margin: 0;
-        padding: 8px 10px;
-        font-size: 15px;
-        border-bottom: 1px solid var(--dim);
+        padding: 18px 20px 14px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
       }
 
       .log {
-        padding: 10px;
+        padding: 18px 20px 20px;
         overflow: auto;
         white-space: pre-wrap;
         font-size: 13px;
-        line-height: 1.4;
+        line-height: 1.65;
+        color: #303030;
+        font-family: 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+        min-height: 0;
+        max-height: 100%;
       }
 
       .leaderboard {
-        padding: 10px;
+        padding: 12px;
       }
 
       table {
@@ -106,21 +167,61 @@
 
       th,
       td {
-        border: 1px solid var(--dim);
-        padding: 6px;
+        border-bottom: 1px solid var(--border);
+        padding: 12px 10px;
         text-align: left;
       }
 
+      th {
+        color: var(--text-muted);
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
       button {
-        background: #0f2a18;
-        color: var(--fg);
-        border: 1px solid var(--dim);
-        padding: 6px 10px;
+        background: var(--accent);
+        color: #fff;
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 16px;
         cursor: pointer;
+        font: inherit;
       }
 
       .status {
-        color: var(--warn);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .status::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      #status {
+        color: var(--text);
+      }
+
+      #status.status-live {
+        color: #138a36;
+      }
+
+      #status.status-paused {
+        color: #9a6700;
+      }
+
+      #status.status-disconnected {
+        color: #b42318;
       }
 
       @media (max-width: 980px) {
@@ -128,78 +229,114 @@
           grid-template-columns: 1fr;
         }
       }
+
+      @media (max-width: 720px) {
+        .page {
+          width: min(100vw - 24px, 1120px);
+          padding-top: 24px;
+        }
+
+        .topbar {
+          padding: 16px;
+        }
+
+        .leaderboard {
+          overflow-x: auto;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="topbar">
-      <div>
-        <strong>THE AGENT ECONOMY</strong>
-        <span class="status" id="status">LIVE</span>
+    <main class="page">
+      <div class="topbar">
+        <div>
+          <strong>System Overview</strong>
+          <div class="meta">
+            <span>Status</span>
+            <span class="status" id="status">LIVE</span>
+          </div>
+        </div>
+        <div class="rates" id="rates">
+          <span>Optimism: --</span>
+          <span>Base: --</span>
+          <span>Arbitrum: --</span>
+        </div>
+        <div class="controls">
+          <button id="simulateBtn">Simulate Zebra</button>
+          <button id="pauseBtn">Pause Agents</button>
+        </div>
       </div>
-      <div class="rates" id="rates">
-        <span>Optimism: --</span>
-        <span>Base: --</span>
-        <span>Arbitrum: --</span>
+
+      <div class="panels">
+        <section class="panel">
+          <h2>Alpha</h2>
+          <div class="log" id="alphaLog"></div>
+        </section>
+        <section class="panel">
+          <h2>Gamma</h2>
+          <div class="log" id="gammaLog"></div>
+        </section>
+        <section class="panel">
+          <h2>Zebra</h2>
+          <div class="log" id="zebraLog"></div>
+        </section>
       </div>
-      <button id="pauseBtn">Pause Agents</button>
-    </div>
 
-    <div class="panels">
-      <section class="panel">
-        <h2>ALPHA</h2>
-        <div class="log" id="alphaLog"></div>
-      </section>
-      <section class="panel">
-        <h2>BRAVO</h2>
-        <div class="log" id="bravoLog"></div>
-      </section>
-      <section class="panel">
-        <h2>HERMES</h2>
-        <div class="log" id="hermesLog"></div>
-      </section>
-    </div>
-
-    <div class="leaderboard">
-      <table>
-        <thead>
-          <tr>
-            <th>Agent</th>
-            <th>Net P&L</th>
-            <th>Yield Earned</th>
-            <th>Fees Paid</th>
-            <th>Fees Collected</th>
-            <th>Current Chain</th>
-            <th>Deployed</th>
-            <th>Jobs Executed</th>
-          </tr>
-        </thead>
-        <tbody id="board"></tbody>
-      </table>
-    </div>
+      <div class="leaderboard">
+        <table>
+          <thead>
+            <tr>
+              <th>Agent</th>
+              <th>Net P&amp;L</th>
+              <th>Yield Earned</th>
+              <th>Fees Paid</th>
+              <th>Fees Collected</th>
+              <th>Current Chain</th>
+              <th>Deployed</th>
+              <th>Jobs Executed</th>
+            </tr>
+          </thead>
+          <tbody id="board"></tbody>
+        </table>
+      </div>
+    </main>
 
     <script>
+      const isProduction = __APP_IS_PRODUCTION__;
       const logs = {
         alpha: document.getElementById('alphaLog'),
-        bravo: document.getElementById('bravoLog'),
-        hermes: document.getElementById('hermesLog'),
+        gamma: document.getElementById('gammaLog'),
+        zebra: document.getElementById('zebraLog'),
       };
 
       const ratesEl = document.getElementById('rates');
       const boardEl = document.getElementById('board');
       const statusEl = document.getElementById('status');
       const pauseBtn = document.getElementById('pauseBtn');
+      const simulateBtn = document.getElementById('simulateBtn');
+
+      if (isProduction) {
+        simulateBtn.hidden = true;
+      }
 
       let paused = false;
-      const ws = new WebSocket(`ws://${location.host}`);
+      const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
+      const ws = new WebSocket(`${wsProtocol}://${location.host}`);
 
       function appendLog(agent, text, ts) {
-        const target = logs[agent] || logs.hermes;
+        const target = logs[agent];
+        if (!target) return;
         target.textContent += `[${new Date(ts).toLocaleTimeString()}] ${text}\n`;
         target.scrollTop = target.scrollHeight;
       }
 
       function num(n) {
         return Number(n || 0).toFixed(6);
+      }
+
+      function setStatus(status) {
+        statusEl.textContent = status;
+        statusEl.className = `status status-${status.toLowerCase()}`;
       }
 
       function render(state) {
@@ -214,8 +351,8 @@
           .join('');
 
         const a = state.agents.alpha;
-        const b = state.agents.bravo;
-        const h = state.agents.hermes;
+        const g = state.agents.gamma;
+        const z = state.agents.zebra;
 
         boardEl.innerHTML = [
           {
@@ -229,24 +366,24 @@
             j: '-',
           },
           {
-            name: 'bravo',
-            pnl: b.balance + b.yieldEarned - b.feesPaid,
-            y: b.yieldEarned,
-            fp: b.feesPaid,
+            name: 'gamma',
+            pnl: g.balance + g.yieldEarned - g.feesPaid,
+            y: g.yieldEarned,
+            fp: g.feesPaid,
             fc: 0,
-            chain: b.currentChain || '-',
-            d: b.deployedAmount,
+            chain: g.currentChain || '-',
+            d: g.deployedAmount,
             j: '-',
           },
           {
-            name: 'hermes',
-            pnl: h.balance + h.feesEarned,
+            name: 'zebra',
+            pnl: z.balance + z.feesEarned,
             y: 0,
             fp: 0,
-            fc: h.feesEarned,
+            fc: z.feesEarned,
             chain: '-',
             d: 0,
-            j: h.jobsExecuted,
+            j: z.jobsExecuted,
           },
         ]
           .map(
@@ -265,7 +402,7 @@
           .join('');
 
         paused = !!state.paused;
-        statusEl.textContent = paused ? 'PAUSED' : 'LIVE';
+        setStatus(paused ? 'PAUSED' : 'LIVE');
         pauseBtn.textContent = paused ? 'Resume Agents' : 'Pause Agents';
       }
 
@@ -273,18 +410,20 @@
         ws.send(JSON.stringify({ type: 'control', action: 'togglePause' }));
       });
 
+      simulateBtn.addEventListener('click', () => {
+        ws.send(JSON.stringify({ type: 'control', action: 'simulateZebra' }));
+      });
+
       ws.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-        if (msg.agent === 'alpha' || msg.agent === 'bravo' || msg.agent === 'hermes') {
+        if (msg.agent === 'alpha' || msg.agent === 'gamma' || msg.agent === 'zebra') {
           appendLog(msg.agent, msg.message, msg.timestamp);
-        } else {
-          appendLog('hermes', `[SYSTEM] ${msg.message}`, msg.timestamp);
         }
         render(msg.state);
       };
 
       ws.onclose = () => {
-        statusEl.textContent = 'DISCONNECTED';
+        setStatus('DISCONNECTED');
       };
     </script>
   </body>

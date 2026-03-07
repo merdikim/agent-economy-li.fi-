@@ -1,5 +1,5 @@
-export type AgentName = 'alpha' | 'bravo' | 'hermes';
-export type OrchestratorName = 'alpha' | 'bravo';
+export type AgentName = 'alpha' | 'gamma' | 'zebra';
+export type OrchestratorName = 'alpha' | 'gamma';
 export type ChainKey = 'optimism' | 'base' | 'arbitrum';
 
 export interface AgentLedger {
@@ -10,7 +10,7 @@ export interface AgentLedger {
   deployedAmount: number;
 }
 
-export interface HermesLedger {
+export interface ZebraLedger {
   balance: number;
   feesEarned: number;
   jobsExecuted: number;
@@ -22,8 +22,8 @@ export interface AppState {
   startedAt: string;
   agents: {
     alpha: AgentLedger;
-    bravo: AgentLedger;
-    hermes: HermesLedger;
+    gamma: AgentLedger;
+    zebra: ZebraLedger;
   };
   rates: Record<ChainKey, number>;
   history: JobResult[];

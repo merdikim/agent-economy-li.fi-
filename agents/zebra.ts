@@ -1,15 +1,15 @@
-import { makeClaudeAgent } from '../lib/groq.js';
+import { Agent } from '../lib/groq.js';
 import { jobBoard } from '../lib/jobBoard.js';
 import { getQuote, executeRoute } from '../lib/lifi.js';
 import { CHAINS } from '../lib/chains.js';
 import { getUsdcBalance, transferUsdc } from '../lib/wallet.js';
 import type { AgentContext, JobOffer, JobResult } from '../lib/types.js';
 
-const HERMES_PROMPT = "You are HERMES, a neutral bridge execution agent. You hold the LI.FI SDK and execute cross-chain USDC bridges on behalf of whoever pays the highest fee. You have no yield motive. When an auction completes, narrate the result in 1-2 sentences: who won, what they bid, and what route you are executing. Be terse and professional.";
+const ZEBRA_PROMPT = "You are ZEBRA, a neutral bridge execution agent. You hold the LI.FI SDK and execute cross-chain USDC bridges on behalf of whoever pays the highest fee. You have no yield motive. When an auction completes, narrate the result in 1-2 sentences: who won, what they bid, and what route you are executing. Be terse and professional.";
 
-export function startHermes(ctx: AgentContext) {
+export function startZebra(ctx: AgentContext) {
   const { stateManager, chainClients, walletContext, broadcast, isPaused } = ctx;
-  const claude = makeClaudeAgent(HERMES_PROMPT);
+  const zebraAgent = new Agent(ZEBRA_PROMPT);
 
   let auctionTimer: NodeJS.Timeout | null = null;
   let auctionBids: JobOffer[] = [];
@@ -22,7 +22,7 @@ export function startHermes(ctx: AgentContext) {
     if (!bids.length || isPaused()) return;
 
     await stateManager.update(async (state) => {
-      state.agents.hermes.auctionsRun += 1;
+      state.agents.zebra.auctionsRun += 1;
     });
 
     const sorted = bids.sort((a, b) => {
@@ -35,27 +35,27 @@ export function startHermes(ctx: AgentContext) {
 
     let narration = '';
     try {
-      const ai = await claude.ask(
+      const agentResponse = await zebraAgent.ask(
         `Auction bids:\n${JSON.stringify(
           sorted.map((b) => ({ from: b.from, fee: b.fee, fromChain: b.fromChain, targetChain: b.targetChain })),
           null,
           2,
         )}`,
       );
-      narration = ai.text;
+      narration = agentResponse.content || `Highest fee winner is ${winner.from} with ${winner.fee} USDC.`;
     } catch (error) {
       narration = `Highest fee winner is ${winner.from} with ${winner.fee} USDC.`;
       broadcast({
         type: 'log',
-        agent: 'hermes',
-        message: `Claude narration failed: ${(error as Error).message}`,
+        agent: 'zebra',
+        message: `Zebra narration failed: ${(error as Error).message}`,
         state: stateManager.get(),
       });
     }
 
     broadcast({
       type: 'auction',
-      agent: 'hermes',
+      agent: 'zebra',
       message: narration,
       state: stateManager.get(),
     });
@@ -88,7 +88,7 @@ export function startHermes(ctx: AgentContext) {
       const required = winner.amount + winner.fee;
       if (balance.formatted < required) {
         const reason = `Insufficient balance for ${winner.from}. Need ${required.toFixed(6)} USDC, have ${balance.formatted.toFixed(6)}.`;
-        broadcast({ type: 'log', agent: 'hermes', message: reason, state: stateManager.get() });
+        broadcast({ type: 'log', agent: 'zebra', message: reason, state: stateManager.get() });
 
         const result: JobResult = {
           status: 'rejected',
@@ -113,12 +113,12 @@ export function startHermes(ctx: AgentContext) {
       }
 
       const quote = await getQuote(winner.fromChain, winner.targetChain, winner.amountRaw, winnerWallet.address);
-      const txHash = await executeRoute(quote.route, winnerWallet.walletsByChain[winner.fromChain]);
+      const txHash = await executeRoute(quote.step, winnerWallet.walletsByChain[winner.fromChain]);
 
       await transferUsdc({
         walletClient: winnerWallet.walletsByChain[winner.fromChain],
         usdc: fromCfg.usdc,
-        to: walletContext.agents.hermes.address,
+        to: walletContext.agents.zebra.address,
         amountRaw: BigInt(winner.feeRaw),
       });
 
@@ -137,15 +137,15 @@ export function startHermes(ctx: AgentContext) {
       };
 
       await stateManager.update(async (state) => {
-        state.agents.hermes.jobsExecuted += 1;
-        state.agents.hermes.feesEarned += winner.fee;
-        state.agents.hermes.balance += winner.fee;
+        state.agents.zebra.jobsExecuted += 1;
+        state.agents.zebra.feesEarned += winner.fee;
+        state.agents.zebra.balance += winner.fee;
         state.history.push(result);
       });
 
       broadcast({
         type: 'execution',
-        agent: 'hermes',
+        agent: 'zebra',
         message: `Executed ${winner.from} route ${winner.fromChain} -> ${winner.targetChain}. tx=${txHash}`,
         state: stateManager.get(),
       });
@@ -172,7 +172,7 @@ export function startHermes(ctx: AgentContext) {
 
       broadcast({
         type: 'execution',
-        agent: 'hermes',
+        agent: 'zebra',
         message: `Execution failed for ${winner.from}: ${(error as Error).message}`,
         state: stateManager.get(),
       });
@@ -187,7 +187,7 @@ export function startHermes(ctx: AgentContext) {
     auctionBids.push(offer);
     broadcast({
       type: 'auction',
-      agent: 'hermes',
+      agent: 'zebra',
       message: `Bid received from ${offer.from}: ${offer.fee.toFixed(6)} USDC for ${offer.fromChain} -> ${offer.targetChain}.`,
       state: stateManager.get(),
     });
@@ -200,6 +200,6 @@ export function startHermes(ctx: AgentContext) {
   });
 
   return {
-    claude,
+    zebraAgent,
   };
 }
