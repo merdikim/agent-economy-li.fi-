@@ -1,8 +1,6 @@
 import 'dotenv/config';
-import express from 'express';
-import fs from 'node:fs/promises';
 import { createServer } from 'node:http';
-import path from 'node:path';
+import next from 'next';
 import { WebSocketServer, WebSocket } from 'ws';
 import { stateManager } from './lib/state.js';
 import { CHAIN_KEYS, CHAINS } from './lib/chains.js';
@@ -14,18 +12,7 @@ import type { BroadcastMessage } from './lib/types.js';
 import { jobBoard } from './lib/jobBoard.js';
 
 const PORT = Number(process.env.PORT || 3000);
-const IS_PRODUCTION = process.env.NODE_ENV_ID !== 'development';
-
-const app = express();
-const publicDir = path.resolve(process.cwd(), 'public');
-app.get('/', async (_req, res) => {
-  const html = await fs.readFile(path.join(publicDir, 'index.html'), 'utf8');
-  res.type('html').send(html.replace('__APP_IS_PRODUCTION__', JSON.stringify(IS_PRODUCTION)));
-});
-app.use(express.static(publicDir));
-
-const server = createServer(app);
-const wss = new WebSocketServer({ server });
+const dev = process.env.NODE_ENV !== 'production';
 const messageHistory: BroadcastMessage[] = [];
 const MAX_MESSAGE_HISTORY = 200;
 
@@ -48,7 +35,7 @@ function enqueueZebraSimulation() {
 
 let paused = false;
 
-function makeBroadcaster() {
+function makeBroadcaster(wss: WebSocketServer) {
   return ({ type, agent, message, state = null }: Omit<BroadcastMessage, 'timestamp'>): void => {
     const payload: BroadcastMessage = {
       type,
@@ -72,6 +59,15 @@ function makeBroadcaster() {
 }
 
 async function bootstrap(): Promise<void> {
+  const nextApp = next({ dev, dir: process.cwd() });
+  const handleRequest = nextApp.getRequestHandler();
+  await nextApp.prepare();
+
+  const server = createServer((req, res) => {
+    void handleRequest(req, res);
+  });
+  const wss = new WebSocketServer({ server, path: '/ws' });
+
   const walletContext = initWallets();
   await stateManager.load();
 
@@ -95,7 +91,7 @@ async function bootstrap(): Promise<void> {
     }
   });
 
-  const broadcast = makeBroadcaster();
+  const broadcast = makeBroadcaster(wss);
 
   wss.on('connection', (socket) => {
     socket.send(
@@ -126,7 +122,7 @@ async function bootstrap(): Promise<void> {
             message: paused ? 'Agent loops paused' : 'Agent loops resumed',
             state: stateManager.get(),
           });
-        } else if (!IS_PRODUCTION && msg?.type === 'control' && msg?.action === 'simulateZebra') {
+        } else if (dev && msg?.type === 'control' && msg?.action === 'simulateZebra') {
           const offer = enqueueZebraSimulation();
           broadcast({
             type: 'log',

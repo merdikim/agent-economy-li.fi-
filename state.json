@@ -1,112 +1,33 @@
 {
-  "cycle": 1208,
-  "startedAt": "2026-03-07T14:23:08.244Z",
+  "cycle": 22,
+  "startedAt": "2026-03-08T19:13:50.250Z",
   "agents": {
     "alpha": {
-      "balance": 5.000004192672171,
-      "yieldEarned": 0.000011112562783658337,
+      "balance": 5.000000465731028,
+      "yieldEarned": 0.000001047743145504789,
       "feesPaid": 0,
       "currentChain": "base",
       "deployedAmount": 5
     },
     "gamma": {
-      "balance": 0.000004134611845298464,
-      "yieldEarned": 0.00001170305787807724,
+      "balance": 0,
+      "yieldEarned": 0,
       "feesPaid": 0,
       "currentChain": "base",
-      "deployedAmount": 5
+      "deployedAmount": 0
     },
     "zebra": {
       "balance": 0,
       "feesEarned": 0,
       "jobsExecuted": 0,
-      "auctionsRun": 6
+      "auctionsRun": 0
     }
   },
   "rates": {
-    "optimism": 0.01656887635424331,
-    "base": 0.024478426674573672,
-    "arbitrum": 0.016302490137497516
+    "optimism": 0.01657233591251006,
+    "base": 0.02446928728604081,
+    "arbitrum": 0.016344179772864065
   },
-  "history": [
-    {
-      "status": "rejected",
-      "winner": "alpha",
-      "loser": null,
-      "reason": "Insufficient balance for alpha. Need 12.623456 USDC, have 0.000000.",
-      "feePaid": 0,
-      "amount": 12.5,
-      "sourceChain": "optimism",
-      "targetChain": "base",
-      "timestamp": "2026-03-07T15:24:15.078Z",
-      "winnerReasoning": "Synthetic bid injected for UI verification.",
-      "loserReasoning": null
-    },
-    {
-      "status": "rejected",
-      "winner": "alpha",
-      "loser": null,
-      "reason": "Insufficient balance for alpha. Need 12.623456 USDC, have 0.000000.",
-      "feePaid": 0,
-      "amount": 12.5,
-      "sourceChain": "optimism",
-      "targetChain": "base",
-      "timestamp": "2026-03-07T15:24:25.427Z",
-      "winnerReasoning": "Synthetic bid injected for UI verification.",
-      "loserReasoning": null
-    },
-    {
-      "status": "rejected",
-      "winner": "alpha",
-      "loser": null,
-      "reason": "Insufficient balance for alpha. Need 12.623456 USDC, have 0.000000.",
-      "feePaid": 0,
-      "amount": 12.5,
-      "sourceChain": "optimism",
-      "targetChain": "base",
-      "timestamp": "2026-03-07T15:24:36.555Z",
-      "winnerReasoning": "Synthetic bid injected for UI verification.",
-      "loserReasoning": null
-    },
-    {
-      "status": "rejected",
-      "winner": "alpha",
-      "loser": null,
-      "reason": "Insufficient balance for alpha. Need 12.623456 USDC, have 0.000000.",
-      "feePaid": 0,
-      "amount": 12.5,
-      "sourceChain": "optimism",
-      "targetChain": "base",
-      "timestamp": "2026-03-07T15:44:45.703Z",
-      "winnerReasoning": "Synthetic bid injected for UI verification.",
-      "loserReasoning": null
-    },
-    {
-      "status": "rejected",
-      "winner": "alpha",
-      "loser": null,
-      "reason": "Insufficient balance for alpha. Need 12.623456 USDC, have 0.000000.",
-      "feePaid": 0,
-      "amount": 12.5,
-      "sourceChain": "optimism",
-      "targetChain": "base",
-      "timestamp": "2026-03-08T11:51:15.115Z",
-      "winnerReasoning": "Synthetic bid injected for UI verification.",
-      "loserReasoning": null
-    },
-    {
-      "status": "rejected",
-      "winner": "alpha",
-      "loser": null,
-      "reason": "Insufficient balance for alpha. Need 12.623456 USDC, have 0.000000.",
-      "feePaid": 0,
-      "amount": 12.5,
-      "sourceChain": "optimism",
-      "targetChain": "base",
-      "timestamp": "2026-03-08T11:52:18.561Z",
-      "winnerReasoning": "Synthetic bid injected for UI verification.",
-      "loserReasoning": null
-    }
-  ],
+  "history": [],
   "paused": false
 }
