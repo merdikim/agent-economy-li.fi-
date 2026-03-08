@@ -1,32 +1,32 @@
 {
-  "cycle": 797,
+  "cycle": 1033,
   "startedAt": "2026-03-07T14:23:08.244Z",
   "agents": {
     "alpha": {
-      "balance": 0,
+      "balance": 5,
       "yieldEarned": 0,
       "feesPaid": 0,
       "currentChain": "base",
-      "deployedAmount": 0
+      "deployedAmount": 5
     },
     "gamma": {
-      "balance": 0,
-      "yieldEarned": 0,
+      "balance": 5.00000005903249,
+      "yieldEarned": 7.078252610842787e-7,
       "feesPaid": 0,
       "currentChain": "base",
-      "deployedAmount": 0
+      "deployedAmount": 5
     },
     "zebra": {
-      "balance": 0,
+      "balance": 5,
       "feesEarned": 0,
       "jobsExecuted": 0,
-      "auctionsRun": 4
+      "auctionsRun": 6
     }
   },
   "rates": {
-    "optimism": 0.016544880441834442,
-    "base": 0.02474334654743071,
-    "arbitrum": 0.01591129012707837
+    "optimism": 0.016564491416651173,
+    "base": 0.024818672233825723,
+    "arbitrum": 0.016343745645282404
   },
   "history": [
     {
@@ -78,6 +78,32 @@
       "sourceChain": "optimism",
       "targetChain": "base",
       "timestamp": "2026-03-07T15:44:45.703Z",
+      "winnerReasoning": "Synthetic bid injected for UI verification.",
+      "loserReasoning": null
+    },
+    {
+      "status": "rejected",
+      "winner": "alpha",
+      "loser": null,
+      "reason": "Insufficient balance for alpha. Need 12.623456 USDC, have 0.000000.",
+      "feePaid": 0,
+      "amount": 12.5,
+      "sourceChain": "optimism",
+      "targetChain": "base",
+      "timestamp": "2026-03-08T11:51:15.115Z",
+      "winnerReasoning": "Synthetic bid injected for UI verification.",
+      "loserReasoning": null
+    },
+    {
+      "status": "rejected",
+      "winner": "alpha",
+      "loser": null,
+      "reason": "Insufficient balance for alpha. Need 12.623456 USDC, have 0.000000.",
+      "feePaid": 0,
+      "amount": 12.5,
+      "sourceChain": "optimism",
+      "targetChain": "base",
+      "timestamp": "2026-03-08T11:52:18.561Z",
       "winnerReasoning": "Synthetic bid injected for UI verification.",
       "loserReasoning": null
     }

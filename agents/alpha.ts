@@ -66,7 +66,7 @@ export function startAlpha(ctx: AgentContext) {
         broadcast({
           type: 'log',
           agent: 'alpha',
-          message: `Holding on ${current}. Best spread is ${(spread * 10000).toFixed(2)} bps.`, // Log the spread in basis points for better readability
+          message: `Holding on ${current}. Best spread is ${(spread * 10000).toFixed(2)} basis points.`,
           state: stateManager.get(),
         });
         return;

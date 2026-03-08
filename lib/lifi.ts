@@ -2,13 +2,12 @@ import {
   EVM,
   createConfig,
   executeRoute as lifiExecuteRoute,
-  getQuote as lifiGetQuote,
+  getRoutes as lifiGetRoutes,
   type Route,
   type RouteExtended,
-  QuoteRequest,
-  LiFiStep,
+  RoutesRequest,
 } from '@lifi/sdk';
-import { parseUnits, type Address, type WalletClient } from 'viem';
+import { parseUnits, type WalletClient } from 'viem';
 import { CHAINS, chainKeyToId } from './chains.js';
 import type { ChainKey } from './types.js';
 
@@ -33,48 +32,50 @@ function normalizeAmount(amount: string | number | bigint): string {
   return amount;
 }
 
-function summarizeRoute(step: LiFiStep): { step: LiFiStep; estimatedOutputUsd: number | null; estimatedCosts: number } {
-  const toAmount = step.estimate.toAmountUSD ?? null;
-  const gasUsd = step.estimate.gasCosts ?? null;
-  const gasCostUsd = Array.isArray(gasUsd) ? gasUsd.reduce((sum, cost) => sum + Number(cost.amountUSD), 0) : Number(gasUsd);
-  const feeUsd = step.estimate.feeCosts ?? null;
-  const feeCostUsd = Array.isArray(feeUsd) ? feeUsd.reduce((sum, cost) => sum + Number(cost.amountUSD), 0) : Number(feeUsd);
+function summarizeRoute(route: Route): { route: Route; estimatedOutputUsd: number; estimatedCosts: number } {
+  const estimatedOutputUsd = Number(route.toAmountUSD ?? 0);
+  const estimatedGasCostUsd = Number(route.gasCostUSD ?? 0);
+  const lifiFeeUsdArray = route.steps?.flatMap((s) => s.estimate.feeCosts ?? []);
+  const lifiFeeUsdSum = lifiFeeUsdArray.reduce((sum, cost) => sum + Number(cost.amountUSD), 0);
+  const estimatedCosts = estimatedGasCostUsd + lifiFeeUsdSum;
 
   return {
-    step,
-    estimatedOutputUsd: toAmount ? Number(toAmount) : null,
-    estimatedCosts: gasCostUsd + feeCostUsd
+    route,
+    estimatedOutputUsd,
+    estimatedCosts
   };
 }
 
-export async function getQuote(
+export async function getRoute(
   fromChain: ChainKey,
   toChain: ChainKey,
   amount: string | number | bigint,
-  fromAddress: Address,
-): Promise<{ step: LiFiStep; estimatedOutputUsd: number | null; estimatedCosts: number }> {
+): Promise<{ route: Route; estimatedOutputUsd: number; estimatedCosts: number }> {
   const fromCfg = CHAINS[fromChain];
   const toCfg = CHAINS[toChain];
 
-  const request:QuoteRequest = {
-    fromChain: chainKeyToId(fromChain),
-    toChain: chainKeyToId(toChain),
-    fromAddress: fromAddress,
+  const request: RoutesRequest = {
+    fromChainId: chainKeyToId(fromChain),
+    toChainId:  chainKeyToId(toChain),
     fromAmount: normalizeAmount(amount),
-    fromToken: fromCfg.usdc,
-    toToken: toCfg.usdc,
+    fromTokenAddress: fromCfg.usdc,
+    toTokenAddress: toCfg.usdc,
   };
 
   try {
-    const quote = await lifiGetQuote(request);
-    return summarizeRoute(quote);
+    const { routes } = await lifiGetRoutes(request);
+    if (!routes || routes.length === 0) {
+      throw new Error('No routes found');
+    }
+
+    return summarizeRoute(routes[0]);
   } catch(err) {
     console.log(err)
-    throw new Error('Failed to get quote from LI.FI')
+    throw new Error('Failed to get route from LI.FI')
   }
 }
 
-export async function executeRoute(route: Route | LiFiStep, walletClient: WalletClient): Promise<string> {
+export async function executeRoute(route: Route, walletClient: WalletClient): Promise<string> {
   evmProvider.setOptions({
     getWalletClient: async () => walletClient,
     switchChain: async (chainId: number) => {

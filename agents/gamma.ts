@@ -1,7 +1,7 @@
 import { parseUnits } from 'viem';
 import { Agent, extractJsonBlock } from '../lib/groq.js';
 import { getRates } from '../lib/aave.js';
-import { getQuote } from '../lib/lifi.js';
+import { getRoute } from '../lib/lifi.js';
 import { jobBoard } from '../lib/jobBoard.js';
 import { CHAIN_KEYS } from '../lib/chains.js';
 import type { AgentContext, DecisionOutput } from '../lib/types.js';
@@ -68,7 +68,7 @@ export function startGamma(ctx: AgentContext) {
         broadcast({
           type: 'log',
           agent: 'gamma',
-          message: `No action. Spread ${spreadBps.toFixed(2)} bps is below threshold.`,
+          message: `No action. Spread ${spreadBps.toFixed(2)} basis points is below threshold.`,
           state: stateManager.get(),
         });
         return;
@@ -85,9 +85,9 @@ export function startGamma(ctx: AgentContext) {
         return;
       }
 
-      let quote;
+      let route;
       try {
-        quote = await getQuote(current, bestChain, amount.toFixed(6), walletContext.agents.gamma.address);
+        route = await getRoute(current, bestChain, amount.toFixed(6));
       } catch (error) {
         broadcast({
           type: 'log',
@@ -107,7 +107,7 @@ export function startGamma(ctx: AgentContext) {
         `Rates: ${JSON.stringify(s.rates)}`,
         `Target chain candidate: ${bestChain}`,
         `Spread bps: ${spreadBps.toFixed(2)}`,
-        `Estimated bridge gas USD (approx USDC): ${Number(quote.estimatedCosts || 0).toFixed(6)}`,
+        `Estimated bridge gas USD (approx USDC): ${Number(route.estimatedCosts || 0).toFixed(6)}`,
         `Expected 24h yield gain (USDC): ${expectedGain24h.toFixed(6)}`,
         'Output required JSON fields exactly.',
       ].join('\n');
@@ -126,7 +126,7 @@ export function startGamma(ctx: AgentContext) {
       }
 
       const requestedFee = Math.max(0, Number(parsed.bidFee || 0));
-      const net24h = expectedGain24h - Number(quote.estimatedCosts || 0) - requestedFee;
+      const net24h = expectedGain24h - Number(route.estimatedCosts || 0) - requestedFee;
       if (net24h <= 0) {
         broadcast({
           type: 'log',

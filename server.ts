@@ -101,7 +101,7 @@ async function bootstrap(): Promise<void> {
     socket.send(
       JSON.stringify({
         type: 'state',
-        agent: 'system',
+        agent: 'zebra',
         message: 'Client connected',
         state: stateManager.get(),
         timestamp: new Date().toISOString(),
@@ -122,7 +122,7 @@ async function bootstrap(): Promise<void> {
           });
           broadcast({
             type: 'log',
-            agent: 'system',
+            agent: 'zebra',
             message: paused ? 'Agent loops paused' : 'Agent loops resumed',
             state: stateManager.get(),
           });
