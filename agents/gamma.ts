@@ -153,8 +153,6 @@ export function startGamma(ctx: AgentContext) {
         targetChain: parsed.targetChain || bestChain,
         amount,
         amountRaw: parseUnits(amount.toFixed(6), 6).toString(),
-        fee: Number(requestedFee.toFixed(6)),
-        feeRaw: parseUnits(requestedFee.toFixed(6), 6).toString(),
         timestamp: new Date().toISOString(),
         reasoning: parsed.reasoning
       };
@@ -163,7 +161,7 @@ export function startGamma(ctx: AgentContext) {
       broadcast({
         type: 'log',
         agent: 'gamma',
-        message: `Posted bridge bid ${offer.fee.toFixed(6)} USDC for ${current} -> ${offer.targetChain}.`,
+        message: `Posted bridge bid for ${current} -> ${offer.targetChain}.`,
         state: stateManager.get(),
       });
     } catch (error) {

@@ -105,29 +105,12 @@ export function startAlpha(ctx: AgentContext) {
         return;
       }
 
-      const expectedGain24h = (amount * spread) / 365; // Expected gain over 24 hours
-      const spreadBps = spread * 10000;
-      const aggressiveness = Math.min(0.9, Math.max(0.1, spreadBps * 0.004));
-      const fee = Number((expectedGain24h * aggressiveness).toFixed(6));
-
-      if (fee >= alpha.balance) {
-        broadcast({
-          type: 'log',
-          agent: 'alpha',
-          message: 'Fee would exceed available balance. Skipping bridge offer.',
-          state: stateManager.get(),
-        });
-        return;
-      }
-
       const offer = {
         from: 'alpha' as const,
         fromChain: current,
         targetChain: parsed.targetChain || bestChain,
         amount,
         amountRaw: parseUnits(amount.toFixed(6), 6).toString(),
-        fee,
-        feeRaw: parseUnits(fee.toFixed(6), 6).toString(),
         timestamp: new Date().toISOString(),
         reasoning: parsed.reasoning,
       };
@@ -136,7 +119,7 @@ export function startAlpha(ctx: AgentContext) {
       broadcast({
         type: 'log',
         agent: 'alpha',
-        message: `Posted bridge bid ${fee.toFixed(6)} USDC for ${current} -> ${offer.targetChain}.`,
+        message: `Posted bridge bid for ${current} -> ${offer.targetChain}.`,
         state: stateManager.get(),
       });
     } catch (error) {

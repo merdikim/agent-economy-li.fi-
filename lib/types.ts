@@ -36,8 +36,6 @@ export interface JobOffer {
   targetChain: ChainKey;
   amount: number;
   amountRaw: string;
-  fee: number;
-  feeRaw: string;
   timestamp: string;
   reasoning: string;
 }

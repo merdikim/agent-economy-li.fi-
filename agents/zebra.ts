@@ -1,11 +1,11 @@
 import { Agent } from '../lib/groq.js';
 import { jobBoard } from '../lib/jobBoard.js';
-import { getQuote, executeRoute } from '../lib/lifi.js';
+import { getRoute, executeRoute } from '../lib/lifi.js';
 import { CHAINS } from '../lib/chains.js';
-import { getUsdcBalance, transferUsdc } from '../lib/wallet.js';
+import { getUsdcBalance } from '../lib/wallet.js';
 import type { AgentContext, JobOffer, JobResult } from '../lib/types.js';
 
-const ZEBRA_PROMPT = "You are ZEBRA, a neutral bridge execution agent. You hold the LI.FI SDK and execute cross-chain USDC bridges on behalf of whoever pays the highest fee. You have no yield motive. When an auction completes, narrate the result in 1-2 sentences: who won, what they bid, and what route you are executing. Be terse and professional.";
+const ZEBRA_PROMPT = "You are ZEBRA, a neutral bridge execution agent. You hold the LI.FI SDK and execute cross-chain USDC bridges based on auction winner selection. You have no yield motive. When an auction completes, narrate the result in 1-2 sentences: who won and what route you are executing. Be terse and professional.";
 
 export function startZebra(ctx: AgentContext) {
   const { stateManager, chainClients, walletContext, broadcast, isPaused } = ctx;
@@ -25,10 +25,9 @@ export function startZebra(ctx: AgentContext) {
       state.agents.zebra.auctionsRun += 1;
     });
 
-    const sorted = bids.sort((a, b) => {
-      if (b.fee !== a.fee) return b.fee - a.fee;
-      return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-    });
+    const sorted = bids.sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
 
     const winner = sorted[0];
     const loser = sorted[1]?.from || null;
@@ -37,14 +36,14 @@ export function startZebra(ctx: AgentContext) {
     try {
       const agentResponse = await zebraAgent.ask(
         `Auction bids:\n${JSON.stringify(
-          sorted.map((b) => ({ from: b.from, fee: b.fee, fromChain: b.fromChain, targetChain: b.targetChain })),
+          sorted.map((b) => ({ from: b.from, fromChain: b.fromChain, targetChain: b.targetChain })),
           null,
           2,
         )}`,
       );
-      narration = agentResponse.content || `Highest fee winner is ${winner.from} with ${winner.fee} USDC.`;
+      narration = agentResponse.content || `Winner is ${winner.from}. Executing ${winner.fromChain} -> ${winner.targetChain}.`;
     } catch (error) {
-      narration = `Highest fee winner is ${winner.from} with ${winner.fee} USDC.`;
+      narration = `Winner is ${winner.from}. Executing ${winner.fromChain} -> ${winner.targetChain}.`;
       broadcast({
         type: 'log',
         agent: 'zebra',
@@ -85,7 +84,7 @@ export function startZebra(ctx: AgentContext) {
         usdc: fromCfg.usdc,
       });
 
-      const required = winner.amount + winner.fee;
+      const required = winner.amount;
       if (balance.formatted < required) {
         const reason = `Insufficient balance for ${winner.from}. Need ${required.toFixed(6)} USDC, have ${balance.formatted.toFixed(6)}.`;
         broadcast({ type: 'log', agent: 'zebra', message: reason, state: stateManager.get() });
@@ -112,21 +111,14 @@ export function startZebra(ctx: AgentContext) {
         return;
       }
 
-      const quote = await getQuote(winner.fromChain, winner.targetChain, winner.amountRaw, winnerWallet.address);
-      const txHash = await executeRoute(quote.step, winnerWallet.walletsByChain[winner.fromChain]);
-
-      await transferUsdc({
-        walletClient: winnerWallet.walletsByChain[winner.fromChain],
-        usdc: fromCfg.usdc,
-        to: walletContext.agents.zebra.address,
-        amountRaw: BigInt(winner.feeRaw),
-      });
+      const { route } = await getRoute(winner.fromChain, winner.targetChain, winner.amountRaw); 
+      const txHash = await executeRoute(route, winnerWallet.walletsByChain[winner.fromChain]);
 
       const result: JobResult = {
         status: 'success',
         winner: winner.from,
         loser,
-        feePaid: winner.fee,
+        feePaid: 0,
         amount: winner.amount,
         sourceChain: winner.fromChain,
         targetChain: winner.targetChain,
@@ -138,8 +130,6 @@ export function startZebra(ctx: AgentContext) {
 
       await stateManager.update(async (state) => {
         state.agents.zebra.jobsExecuted += 1;
-        state.agents.zebra.feesEarned += winner.fee;
-        state.agents.zebra.balance += winner.fee;
         state.history.push(result);
       });
 
@@ -188,7 +178,7 @@ export function startZebra(ctx: AgentContext) {
     broadcast({
       type: 'auction',
       agent: 'zebra',
-      message: `Bid received from ${offer.from}: ${offer.fee.toFixed(6)} USDC for ${offer.fromChain} -> ${offer.targetChain}.`,
+      message: `Bid received from ${offer.from} for ${offer.fromChain} -> ${offer.targetChain}.`,
       state: stateManager.get(),
     });
 
