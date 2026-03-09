@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import { createServer } from 'node:http';
-import next from 'next';
 import { WebSocketServer, WebSocket } from 'ws';
 import { stateManager } from './lib/state.js';
 import { CHAIN_KEYS, CHAINS } from './lib/chains.js';
@@ -59,12 +58,16 @@ function makeBroadcaster(wss: WebSocketServer) {
 }
 
 async function bootstrap(): Promise<void> {
-  const nextApp = next({ dev, dir: process.cwd() });
-  const handleRequest = nextApp.getRequestHandler();
-  await nextApp.prepare();
-
   const server = createServer((req, res) => {
-    void handleRequest(req, res);
+    const isHealthcheck = req.method === 'GET' && (req.url === '/' || req.url === '/health');
+    if (isHealthcheck) {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, service: 'agent-economy-server' }));
+      return;
+    }
+
+    res.writeHead(404, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Not found' }));
   });
   const wss = new WebSocketServer({ server, path: '/ws' });
 

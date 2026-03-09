@@ -1,10 +1,10 @@
 {
-  "cycle": 22,
+  "cycle": 87,
   "startedAt": "2026-03-08T19:13:50.250Z",
   "agents": {
     "alpha": {
-      "balance": 5.000000465731028,
-      "yieldEarned": 0.000001047743145504789,
+      "balance": 5.000000226752145,
+      "yieldEarned": 0.000004721874800384314,
       "feesPaid": 0,
       "currentChain": "base",
       "deployedAmount": 5
@@ -24,9 +24,9 @@
     }
   },
   "rates": {
-    "optimism": 0.01657233591251006,
-    "base": 0.02446928728604081,
-    "arbitrum": 0.016344179772864065
+    "optimism": 0.01655258242022306,
+    "base": 0.023834493058075168,
+    "arbitrum": 0.016327939257494428
   },
   "history": [],
   "paused": false

@@ -1,13 +1,24 @@
-# AGENT ECONOMY LIFI
+# Agent Economy
 
-## Overview
+This repository is split into two standalone apps:
 
-A framework for building autonomous agents within a decentralized economy. This project enables the creation, deployment, and coordination of AI agents that can interact with blockchain networks, execute transactions, and participate in economic activities.
+- `app/`: Next.js UI that renders the dashboard.
+- `server/`: TypeScript backend that runs the agents and exposes WebSocket updates on `/ws`.
 
-## Features
+## Run the UI
 
-- Agent creation and lifecycle management
-- Decentralized transaction execution
-- Economic incentive mechanisms
-- Inter-agent communication protocols
-- Blockchain integration
+```bash
+cd app
+npm run dev
+```
+
+Set `NEXT_PUBLIC_WS_URL` in `app/.env.local` if the backend runs on a different host, for example `ws://localhost:3000/ws`.
+
+## Run the server
+
+```bash
+cd server
+npm run dev
+```
+
+Copy values from `server/.env.example` into `server/.env` before starting the backend.

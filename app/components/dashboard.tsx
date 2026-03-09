@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { AppState, BroadcastMessage, AgentName } from '../../lib/types.js';
+import type { AppState, BroadcastMessage, AgentName } from '../lib/types';
 
 type AgentLogMap = Record<AgentName, string[]>;
+const RECONNECT_DELAY_MS = 3000;
 
 const initialLogs: AgentLogMap = {
   alpha: [],
@@ -22,6 +23,17 @@ function formatTime(timestamp: string) {
 function getSocketUrl() {
   if (typeof window === 'undefined') {
     return '';
+  }
+
+  const configuredUrl = process.env.NEXT_PUBLIC_WS_URL?.trim();
+  if (configuredUrl) {
+    if (configuredUrl.startsWith('http://')) {
+      return `ws://${configuredUrl.slice('http://'.length)}`;
+    }
+    if (configuredUrl.startsWith('https://')) {
+      return `wss://${configuredUrl.slice('https://'.length)}`;
+    }
+    return configuredUrl;
   }
 
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
@@ -72,37 +84,66 @@ export function Dashboard() {
   const [logs, setLogs] = useState<AgentLogMap>(initialLogs);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const ws = new WebSocket(getSocketUrl());
-    socketRef.current = ws;
+    let cancelled = false;
 
-    ws.onopen = () => {
-      setIsConnected(true);
-    };
+    function clearReconnectTimer() {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+    }
 
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data) as BroadcastMessage;
-      if (message.agent === 'alpha' || message.agent === 'gamma' || message.agent === 'zebra') {
-        const agent = message.agent;
-        setLogs((current) => ({
-          ...current,
-          [agent]: [...current[agent], `[${formatTime(message.timestamp)}] ${message.message}`].slice(-200),
-        }));
+    function connect() {
+      const socketUrl = getSocketUrl();
+      if (!socketUrl) {
+        return;
       }
 
-      if (message.state) {
-        setState(message.state);
-      }
-    };
+      const ws = new WebSocket(socketUrl);
+      socketRef.current = ws;
 
-    ws.onclose = () => {
-      setIsConnected(false);
-    };
+      ws.onopen = () => {
+        clearReconnectTimer();
+        setIsConnected(true);
+      };
+
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data) as BroadcastMessage;
+        if (message.agent === 'alpha' || message.agent === 'gamma' || message.agent === 'zebra') {
+          const agent = message.agent;
+          setLogs((current) => ({
+            ...current,
+            [agent]: [...current[agent], `[${formatTime(message.timestamp)}] ${message.message}`].slice(-200),
+          }));
+        }
+
+        if (message.state) {
+          setState(message.state);
+        }
+      };
+
+      ws.onclose = () => {
+        if (socketRef.current === ws) {
+          socketRef.current = null;
+        }
+        setIsConnected(false);
+        if (!cancelled) {
+          clearReconnectTimer();
+          reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
+        }
+      };
+    }
+
+    connect();
 
     return () => {
+      cancelled = true;
+      clearReconnectTimer();
+      socketRef.current?.close();
       socketRef.current = null;
-      ws.close();
     };
   }, []);
 
@@ -125,6 +166,13 @@ export function Dashboard() {
             <span>Status</span>
             <span className={statusClassName}>{statusLabel}</span>
           </div>
+          {!isConnected ? (
+            <div className="meta">
+              <span>
+                Set <code>NEXT_PUBLIC_WS_URL</code> to a websocket backend when hosting the UI on Vercel.
+              </span>
+            </div>
+          ) : null}
         </div>
 
         <div className="rates" aria-label="Current rates">
@@ -135,11 +183,11 @@ export function Dashboard() {
 
         <div className="controls">
           {process.env.NODE_ENV !== 'production' ? (
-            <button type="button" onClick={() => sendControl('simulateZebra')}>
+            <button type="button" onClick={() => sendControl('simulateZebra')} disabled={!isConnected}>
               Simulate Zebra
             </button>
           ) : null}
-          <button type="button" onClick={() => sendControl('togglePause')}>
+          <button type="button" onClick={() => sendControl('togglePause')} disabled={!isConnected}>
             {paused ? 'Resume Agents' : 'Pause Agents'}
           </button>
         </div>
