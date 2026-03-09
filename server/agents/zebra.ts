@@ -111,7 +111,7 @@ export function startZebra(ctx: AgentContext) {
         return;
       }
 
-      const { route } = await getRoute(winner.fromChain, winner.targetChain, winner.amountRaw); 
+      const { route } = await getRoute(winner.fromChain, winner.targetChain, winner.amountRaw, winnerWallet.address); 
       const txHash = await executeRoute(route, winnerWallet.walletsByChain[winner.fromChain]);
 
       const result: JobResult = {

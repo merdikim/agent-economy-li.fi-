@@ -87,7 +87,7 @@ export function startGamma(ctx: AgentContext) {
 
       let route;
       try {
-        route = await getRoute(current, bestChain, amount.toFixed(6));
+        route = await getRoute(current, bestChain, amount.toFixed(6), walletContext.agents.gamma.address);
       } catch (error) {
         broadcast({
           type: 'log',

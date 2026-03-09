@@ -1,0 +1,60 @@
+{
+  "cycle": 97,
+  "startedAt": "2026-03-09T14:36:44.409Z",
+  "agents": {
+    "alpha": {
+      "balance": 3.995000547595138,
+      "yieldEarned": 0.0000014231371000162659,
+      "feesPaid": 0,
+      "currentChain": "base",
+      "deployedAmount": 0.5
+    },
+    "gamma": {
+      "balance": 1.0000009372504044,
+      "yieldEarned": 0.0000011320528284108793,
+      "feesPaid": 0,
+      "currentChain": "base",
+      "deployedAmount": 1
+    },
+    "zebra": {
+      "balance": 0,
+      "feesEarned": 0,
+      "jobsExecuted": 1,
+      "auctionsRun": 2
+    }
+  },
+  "rates": {
+    "optimism": 0.016608241981978633,
+    "base": 0.02558450689572145,
+    "arbitrum": 0.016362740679634058
+  },
+  "history": [
+    {
+      "status": "rejected",
+      "winner": "alpha",
+      "loser": null,
+      "reason": "Insufficient balance for alpha. Need 12.500000 USDC, have 0.000000.",
+      "feePaid": 0,
+      "amount": 12.5,
+      "sourceChain": "optimism",
+      "targetChain": "base",
+      "timestamp": "2026-03-09T14:38:58.434Z",
+      "winnerReasoning": "Synthetic bid injected for UI verification.",
+      "loserReasoning": null
+    },
+    {
+      "status": "success",
+      "winner": "alpha",
+      "loser": null,
+      "feePaid": 0,
+      "amount": 0.5,
+      "sourceChain": "arbitrum",
+      "targetChain": "base",
+      "txHash": "0xa3aa1d144d683e65efd4ad4326202f498bdae2802df2f5cb2a87ff2a98dc049f",
+      "timestamp": "2026-03-09T14:42:23.595Z",
+      "winnerReasoning": "Synthetic bid injected for UI verification.",
+      "loserReasoning": null
+    }
+  ],
+  "paused": false
+}

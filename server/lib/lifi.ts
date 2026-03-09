@@ -50,6 +50,7 @@ export async function getRoute(
   fromChain: ChainKey,
   toChain: ChainKey,
   amount: string | number | bigint,
+  fromAddress: string,
 ): Promise<{ route: Route; estimatedOutputUsd: number; estimatedCosts: number }> {
   const fromCfg = CHAINS[fromChain];
   const toCfg = CHAINS[toChain];
@@ -60,6 +61,7 @@ export async function getRoute(
     fromAmount: normalizeAmount(amount),
     fromTokenAddress: fromCfg.usdc,
     toTokenAddress: toCfg.usdc,
+    fromAddress,
     toAddress: toCfg.aavePool
   };
 

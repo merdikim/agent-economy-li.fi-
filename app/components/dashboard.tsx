@@ -181,11 +181,11 @@ export function Dashboard() {
         </div>
 
         <div className="controls">
-          {process.env.NODE_ENV !== 'production' ? (
+          {/* {process.env.NODE_ENV !== 'production' ? (
             <button type="button" onClick={() => sendControl('simulateZebra')} disabled={!isConnected}>
               Simulate Zebra
             </button>
-          ) : null}
+          ) : null} */}
           <button type="button" onClick={() => sendControl('togglePause')} disabled={!isConnected}>
             {paused ? 'Resume Agents' : 'Pause Agents'}
           </button>

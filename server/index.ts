@@ -18,10 +18,10 @@ const MAX_MESSAGE_HISTORY = 200;
 function enqueueZebraSimulation() {
   const offer = {
     from: 'alpha' as const,
-    fromChain: 'optimism' as const,
+    fromChain: 'arbitrum' as const,
     targetChain: 'base' as const,
-    amount: 12.5,
-    amountRaw: '12500000',
+    amount: 0.5,
+    amountRaw: '500000',
     timestamp: new Date().toISOString(),
     reasoning: 'Synthetic bid injected for UI verification.',
   };
