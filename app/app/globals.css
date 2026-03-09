@@ -21,9 +21,14 @@ body {
 }
 
 .page {
-  width: min(1120px, calc(100vw - 32px));
-  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;
   padding: 32px 0 40px;
+}
+
+.page .dashboard {
+  width: min(1120px, calc(100vw - 32px));
 }
 
 .topbar,

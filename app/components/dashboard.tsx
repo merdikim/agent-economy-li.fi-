@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { AppState, BroadcastMessage, AgentName } from '../lib/types';
+import DotGrid from './dot-grid/DotGrid';
 
 type AgentLogMap = Record<AgentName, string[]>;
 const RECONNECT_DELAY_MS = 3000;
@@ -43,7 +44,6 @@ function getSocketUrl() {
 function makeBoardRows(state: AppState) {
   const alpha = state.agents.alpha;
   const gamma = state.agents.gamma;
-  const zebra = state.agents.zebra;
 
   return [
     {
@@ -51,30 +51,16 @@ function makeBoardRows(state: AppState) {
       pnl: alpha.balance + alpha.yieldEarned - alpha.feesPaid,
       yieldEarned: alpha.yieldEarned,
       feesPaid: alpha.feesPaid,
-      feesCollected: 0,
       currentChain: alpha.currentChain || '-',
       deployed: alpha.deployedAmount,
-      jobsExecuted: '-',
     },
     {
       name: 'gamma',
       pnl: gamma.balance + gamma.yieldEarned - gamma.feesPaid,
       yieldEarned: gamma.yieldEarned,
       feesPaid: gamma.feesPaid,
-      feesCollected: 0,
       currentChain: gamma.currentChain || '-',
       deployed: gamma.deployedAmount,
-      jobsExecuted: '-',
-    },
-    {
-      name: 'zebra',
-      pnl: zebra.balance + zebra.feesEarned,
-      yieldEarned: 0,
-      feesPaid: 0,
-      feesCollected: zebra.feesEarned,
-      currentChain: '-',
-      deployed: 0,
-      jobsExecuted: zebra.jobsExecuted,
     },
   ];
 }
@@ -158,7 +144,20 @@ export function Dashboard() {
   }
 
   return (
-    <main className="page">
+    <main style={{ width: '100%', height: '100vh', position: 'relative' }}>
+      <DotGrid
+        dotSize={0.6}
+        gap={5}
+        baseColor="#271E37"
+        activeColor="#5227FF"
+        proximity={0}
+        shockRadius={50}
+        shockStrength={1}
+        resistance={100}
+        returnDuration={0.1}
+      />
+      <div className="page" style={{position:'absolute', top:"0"}}>
+        <div className="dashboard">
       <div className="topbar">
         <div>
           <strong>System Overview</strong>
@@ -212,10 +211,8 @@ export function Dashboard() {
               <th>Net P&amp;L</th>
               <th>Yield Earned</th>
               <th>Fees Paid</th>
-              <th>Fees Collected</th>
               <th>Current Chain</th>
               <th>Deployed</th>
-              <th>Jobs Executed</th>
             </tr>
           </thead>
           <tbody>
@@ -225,14 +222,14 @@ export function Dashboard() {
                 <td>{formatNumber(row.pnl)}</td>
                 <td>{formatNumber(row.yieldEarned)}</td>
                 <td>{formatNumber(row.feesPaid)}</td>
-                <td>{formatNumber(row.feesCollected)}</td>
                 <td>{row.currentChain}</td>
                 <td>{formatNumber(row.deployed)}</td>
-                <td>{row.jobsExecuted}</td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+      </div>
       </div>
     </main>
   );
