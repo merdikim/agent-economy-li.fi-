@@ -60,6 +60,7 @@ export async function getRoute(
     fromAmount: normalizeAmount(amount),
     fromTokenAddress: fromCfg.usdc,
     toTokenAddress: toCfg.usdc,
+    toAddress: toCfg.aavePool
   };
 
   try {

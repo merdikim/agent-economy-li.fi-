@@ -22,8 +22,6 @@ function enqueueZebraSimulation() {
     targetChain: 'base' as const,
     amount: 12.5,
     amountRaw: '12500000',
-    fee: 0.123456,
-    feeRaw: '123456',
     timestamp: new Date().toISOString(),
     reasoning: 'Synthetic bid injected for UI verification.',
   };
@@ -77,7 +75,7 @@ async function bootstrap(): Promise<void> {
   await stateManager.update(async (state) => {
     state.startedAt ||= new Date().toISOString();
 
-    for (const agent of ['alpha', 'gamma', 'zebra'] as const) {
+    for (const agent of ['alpha', 'gamma'] as const) {
       let total = 0;
       for (const chainKey of CHAIN_KEYS) {
         const balance = await getUsdcBalance({
@@ -88,9 +86,6 @@ async function bootstrap(): Promise<void> {
         total += balance.formatted;
       }
       state.agents[agent].balance = total;
-      if (agent !== 'zebra' && !state.agents[agent].deployedAmount) {
-        state.agents[agent].deployedAmount = total;
-      }
     }
   });
 
@@ -130,7 +125,7 @@ async function bootstrap(): Promise<void> {
           broadcast({
             type: 'log',
             agent: 'system',
-            message: `Injected test job for zebra: ${offer.from} ${offer.fromChain} -> ${offer.targetChain} (${offer.fee.toFixed(6)} USDC fee).`,
+            message: `Injected test job for zebra: ${offer.from} ${offer.fromChain} -> ${offer.targetChain}).`,
             state: stateManager.get(),
           });
         }

@@ -1,7 +1,7 @@
 import { createPublicClient, createWalletClient, formatUnits, http, type Address, type PublicClient, type WalletClient } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { CHAINS } from './chains.js';
-import type { AgentName, ChainKey } from './types.js';
+import type { AgentName, ChainKey, OrchestratorName } from './types.js';
 import { erc20Abi } from "viem";
 
 interface ChainClientsEntry {
@@ -18,7 +18,7 @@ export interface AgentWallet {
 }
 
 export interface WalletContext {
-  agents: Record<AgentName, AgentWallet>;
+  agents: Record<OrchestratorName, AgentWallet>;
   chainClients: ChainClients;
 }
 
@@ -52,15 +52,14 @@ export function buildClients(): ChainClients {
 export function initWallets(): WalletContext {
   const chainClients = buildClients();
 
-  const agentConfig: Record<AgentName, string> = {
+  const agentConfig: Record<OrchestratorName, string> = {
     alpha: requireEnv('ALPHA_PRIVATE_KEY'),
     gamma: requireEnv('GAMMA_PRIVATE_KEY'),
-    zebra: requireEnv('ZEBRA_PRIVATE_KEY'),
   };
 
   const agents = {} as WalletContext['agents'];
 
-  for (const [agent, pk] of Object.entries(agentConfig) as [AgentName, string][]) {
+  for (const [agent, pk] of Object.entries(agentConfig) as [OrchestratorName, string][]) {
     const account = privateKeyToAccount(normalizePk(pk));
     const walletsByChain = {} as Record<ChainKey, WalletClient>;
 
